@@ -36,14 +36,17 @@ var ch = make(chan rankURL)
 var tokens = make(chan struct{}, MAXCONCURRENCY)
 
 var re *regexp.Regexp
+var debug int
 
 func main() {
 	inFile := flag.String("infile", "urls.txt", "input file for urls")
 	outFile := flag.String("outfile", "out.txt", "output file for urls")
 	rePattern := flag.String("regexp", "new.?", "reg exp for matching")
+	debugFlag := flag.Int("debugLevel", 0, "0-off,1-info,2-all")
 	flag.Parse()
 	reString := "(?i)" + *rePattern // flag to case insensitive search
 	re = regexp.MustCompile(reString)
+	debug = *debugFlag
 
 	urlList := readUrlList(*inFile) // get the urls from file
 	start := time.Now()
@@ -54,51 +57,72 @@ func main() {
 	for range urlList {
 		output := <-ch
 		key := output.url[7:]
-		//fmt.Printf("got output from %s, match %s\n", key, output.result)
+		switch debug {
+		case 1:
+			fmt.Printf("main: got output from %s\n", key)
+		case 2:
+			fmt.Printf("main: got output from %s, match %s\n", key, output.result)
+		}
 		output.rank = urlList[key].rank
 		urlList[key] = output
-		//fmt.Printf("assign to urlList[%s], match %s\n", key, urlList[key].result)
 	}
 
 	writeToFile(*outFile, urlList)
-	fmt.Printf("%.2fs elapsed overall.\n", time.Since(start).Seconds())
+	fmt.Printf("main: %.2fs elapsed overall.\n", time.Since(start).Seconds())
 }
 
 func fetch(url string) {
 	start := time.Now()
 	var ru rankURL
 	ru.url = url
-	//fmt.Println(url + " is up " + time.Now().String())
+	if debug > 0 {
+		fmt.Println(url + " is up " + time.Now().String())
+	}
 	tokens <- struct{}{} // acquire a token
-	//fmt.Println(url + " got a token " + time.Now().String())
+	if debug > 0 {
+		fmt.Println(url + " got a token " + time.Now().String())
+	}
 
 	resp, err := http.Get(url)
-	if err != nil {
+	if err != nil { // can't just exit, need to take care of unblocking others
+		if debug > 0 {
+			fmt.Printf("Get %s, fetch error: %v\n", url, err)
+		}
 		ru.result = fmt.Sprintf("Get %s, fetch error: %v\n", url, err)
+
 		<-tokens
+		if debug > 0 {
+			fmt.Println(url + " release a token " + time.Now().String())
+		}
 		ch <- ru
 	} else {
 		b, err := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "fetch: reading %s: %v\n", url, err)
-			os.Exit(1)
-		}
-		<-tokens // release the token
-		//fmt.Println(url + " release a token " + time.Now().String())
-		src := string(b)
-		// fmt.Println(src)
-		//fmt.Printf("%s\n", re.FindAllString(src, -1))
 
-		match := re.FindAllString(src, -1)
-		for _, s := range match {
-			ru.result += " " + s
+		<-tokens // release the token
+		if debug > 0 {
+			fmt.Println(url + " release a token " + time.Now().String())
 		}
+
+		if err != nil {
+			fmt.Printf("fetch: reading %s error: %v\n", url, err)
+			ru.result = fmt.Sprintf("fetch: reading %s error: %v\n", url, err)
+		} else {
+			src := string(b)
+
+			match := re.FindAllString(src, -1)
+			for _, s := range match {
+				ru.result += " " + s
+			}
+		}
+
 		ch <- ru
 	}
 
 	secs := time.Since(start).Seconds()
-	fmt.Printf("%s done, %.2fs elapsed\n", url, secs)
+	if debug > 0 {
+		fmt.Printf("%s: done, %.2fs elapsed\n", url, secs)
+	}
 }
 
 func readUrlList(fName string) map[string]rankURL {

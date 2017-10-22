@@ -19,5 +19,19 @@ n. "pcworld.com/": match1, match2,...
 
 If the HTTP request returns error, just record the error.
 
-urlFetchAndSearch is a con-current program that fetchs the content of the home page of these url's and find all matches (a regex, case insensitive) with the constraint that there can't be more than 20 HTTP requests.
+urlFetchAndSearch is a con-current program that fetchs the content of the home page of these url's and find all matches (a regex, case insensitive) with the constraint that there can't be more than 20 HTTP requests at any given time.
+
+# Usage
+compile: $go build websiteSearcher.go
+execute: $ ./websiteSearcher.exe -infile="urls-test.txt" -regexp="logi.?" -debug=1
+flags: 
+        -debugLevel int                               
+        0-off,1-info,2-all                      
+        -infile string                                
+        input file for urls (default "urls.txt")
+        -outfile string                               
+        output file for urls (default "out.txt")
+        -regexp string                                
+        reg exp for matching (default "new.?")  
+
 
