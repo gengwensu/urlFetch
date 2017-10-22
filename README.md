@@ -1,20 +1,18 @@
 # urlFetch
 Con-current url fetch and search
 
-Input: a list of url's from a file; one per line starting from the second line.
-1. "facebook.com/"
-2. "google.com/"
+Input: a list of url's from a file; one per line starting from the second line. The first number shows the rank of the website.
 
-        ...
-        
+1. "facebook.com/"
+2. "google.com/"  
+        ...    
 n. "pcworld.com/"
 
 Output: a file
-1. "facebook.com/": match1, match2,...
-2. "google.com/": match1, match2,...
 
-       ...
-       
+1. "facebook.com/": match1, match2,...
+2. "google.com/": match1, match2,...  
+       ...  
 n. "pcworld.com/": match1, match2,...
 
 If the HTTP request returns error, just record the error.
@@ -22,16 +20,19 @@ If the HTTP request returns error, just record the error.
 urlFetchAndSearch is a con-current program that fetchs the content of the home page of these url's and find all matches (a regex, case insensitive) with the constraint that there can't be more than 20 HTTP requests at any given time.
 
 # Usage
-compile: $go build websiteSearcher.go
-execute: $ ./websiteSearcher.exe -infile="urls-test.txt" -regexp="logi.?" -debug=1
-flags: 
-        -debugLevel int                               
-        0-off,1-info,2-all                      
-        -infile string                                
-        input file for urls (default "urls.txt")
-        -outfile string                               
-        output file for urls (default "out.txt")
-        -regexp string                                
-        reg exp for matching (default "new.?")  
+compile: $go build websiteSearcher. 
+execute: $ ./websiteSearcher.exe -infile="urls-test.txt" -regexp="logi.?" -debug=1  
+
+flags:  
+
+* -debugLevel int                               
+  * 0-off,1-info,2-all                      
+* -infile string                                
+  * input file for urls (default "urls.txt")
+* -outfile string                               
+  * output file for urls (default "out.txt")
+* -regexp string                                
+  * reg exp for matching (default "new.?")  
+
 
 
