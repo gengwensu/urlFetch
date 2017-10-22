@@ -44,6 +44,8 @@ func main() {
 	rePattern := flag.String("regexp", "new.?", "reg exp for matching")
 	debugFlag := flag.Int("debugLevel", 0, "0-off,1-info,2-all")
 	flag.Parse()
+
+	fmt.Printf("Web search running. input %s, output %s, regexp %s\n", *inFile, *outFile, *rePattern)
 	reString := "(?i)" + *rePattern // flag to case insensitive search
 	re = regexp.MustCompile(reString)
 	debug = *debugFlag
